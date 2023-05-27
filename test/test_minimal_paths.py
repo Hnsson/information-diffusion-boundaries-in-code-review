@@ -1,8 +1,3 @@
-import sys
-import os
-parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-sys.path.append(parent_dir)
-
 import unittest
 
 from simulation.model import CommunicationNetwork
@@ -30,36 +25,8 @@ class MinimalPath(unittest.TestCase):
         result_2 = single_source_dijkstra_hyperedges(MinimalPath.cn, 'v1', DistanceType.FOREMOST, min_timing=0)
         self.assertEqual(result_1, result_2, 'Single-source Dijkstra implementations are not equivalent')
 
-class TestCommunicationNetwork(unittest.TestCase):
-    def __init__(self):
-        super().__init__()
-        # Additional initialization
 
 class TestMinimalPath(unittest.TestCase):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, methodName=None):
+        super().__init__(methodName=methodName)
         # Additional initialization
-
-class TestTimeVaryingHypergraph(unittest.TestCase):
-    def __init__(self):
-        super().__init__()
-        # Additional initialization
-
-class TestSuite():
-    def __init__(self):
-        self.suite = self.setup_suite()
-
-    def setup_suite(self):
-        test_suite = unittest.TestSuite()
-
-        test_suite.addTest(unittest.makeSuite(TestCommunicationNetwork))
-        test_suite.addTest(unittest.makeSuite(TestMinimalPath))
-        test_suite.addTest(unittest.makeSuite(TestTimeVaryingHypergraph))
-
-        return test_suite
-
-    def run(self):
-        unittest.TextTestRunner().run(self.suite)
-
-if __name__ == '__main__':
-    TestSuite().run()
