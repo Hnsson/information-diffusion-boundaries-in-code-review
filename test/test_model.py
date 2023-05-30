@@ -103,5 +103,132 @@ class TestTimeVaryingHypergraph(unittest.TestCase):
         super().__init__(methodName=methodName)
         # Additional initialization
 
-    # def test_bla(self):
-        pass
+    def test_vertices(self):
+        hedges = {'e1': ['a', 'b'], 'e2': ['a', 'c', 'd'], 'e3': ['c', 'd', 'e'], 'e4': [], '': ['f'], 'e5': ['g']}
+        timings = {'e1': 1, 'e2': 2, 'e3': 2, 'e4': 3, '': 4, 'e5': 5}
+
+        hyper_graph = TimeVaryingHypergraph(hedges, timings)
+
+        # Are all vertices present? -> Should be {'a', 'b', 'c', 'd', 'e', 'f', 'g'}
+        all_vertices = hyper_graph.vertices()
+        expected_vertices = {vertex for hedge_vertices in hedges.values() for vertex in hedge_vertices}
+        self.assertEqual(all_vertices, expected_vertices, 'All vertices is not present!')
+
+        # Is the order correct? Should be -> Should be 7
+        self.assertEqual(len(all_vertices), len(expected_vertices), 'The order is not correct')
+
+        # What vertices are incident to edge 'e3'? -> Should be {'c', 'd', 'e'}
+        hedge = 'e3'
+        hedge_vertices = hyper_graph.vertices(hedge)
+        expected_hyperedge_vertices = set(hedges[hedge])
+        self.assertEqual(hedge_vertices, expected_hyperedge_vertices, f'All vertices are not present in hedge: {hedge}!')
+
+        # Test with unknown hyperedge. -> Should Raise EntityNotFound
+        unknown_hedge = 'e10'
+        with self.assertRaises(EntityNotFound):
+            hyper_graph.vertices(unknown_hedge)
+        
+        # Isolated vertex: A vertex v is isolated if E(v) = ∅
+        null_hedge = {''}
+        isolated_vertex = 'f'
+        isolated_hedge = hyper_graph.hyperedges(isolated_vertex)
+        self.assertEqual(isolated_hedge, null_hedge, 'Hyperedges to a isolated vertex should be null (∅)')
+
+
+        # Pendant vertex: A vertex is incident to exactly 1 edge
+        pendant_vertex = 'g'
+        incident_edges = len(hyper_graph.hyperedges(pendant_vertex))
+        self.assertEqual(incident_edges, 1, f'A pendant vertex: {pendant_vertex} must be incident to exactly 1 edge')
+    
+    def test_hedges(self):
+        hedges = {'e1': ['a', 'b'], 'e2': ['a', 'c', 'd'], 'e3': ['c', 'd', 'e'], 'e4': [], '': ['f'], 'e5': ['g']}
+        timings = {'e1': 1, 'e2': 2, 'e3': 2, 'e4': 3, '': 4, 'e5': 5}
+
+        hyper_graph = TimeVaryingHypergraph(hedges, timings)
+
+        # Are all hedges present? -> Should be {'e1', 'e2', 'e3', 'e4', '', 'e5'}
+        all_hedges = hyper_graph.hyperedges()
+        expected_hedges = set(hedges.keys())
+        self.assertEqual(all_hedges, expected_hedges, 'All hedges are not present!')
+
+        # Is the size correct? -> Should be 6
+        self.assertEqual(len(all_hedges), len(expected_hedges), 'The size is not correct')
+
+        # What edges are incident to vertex 'd'? -> Should be {'e2', 'e3'}
+        vertex = 'd'
+        incident_hedges = hyper_graph.hyperedges(vertex)
+        expected_incident_hedges = set(h for h, vertices in hedges.items() if vertex in vertices)
+        self.assertEqual(incident_hedges, expected_incident_hedges, f'Incident edges to vertex: {vertex} does not match')
+
+        # Test with unknown vertex. -> Should Raise EntityNotFound
+        unknown_vertex = 'z'
+        with self.assertRaises(EntityNotFound):
+            hyper_graph.hyperedges(unknown_vertex)
+        
+        # Empty edge: An edge is empty is e = ∅
+        empty_edge = 'e4'
+        empty_vertices = hyper_graph.vertices(empty_edge)
+        null_vertices = set()
+        self.assertEqual(empty_vertices, null_vertices, f'An empty edge {empty_edge} should contain empty vertices i.e. e = ∅')
+
+        # Singleton: An edge incident to exactly 1 vertex
+        singleton_hedge = 'e5'
+        incident_vertices = len(hyper_graph.vertices('e5'))
+        self.assertEqual(incident_vertices, 1, f'A singleton hedge {singleton_hedge} should only be incident to exactly 1 vertex')
+    
+    def test_timings(self):
+        hedges = {'e1': ['a', 'b'], 'e2': ['a', 'c', 'd'], 'e3': ['c', 'd', 'e'], 'e4': [], '': ['f'], 'e5': ['g']}
+        timings = {'e1': 1, 'e2': 2, 'e3': 2, 'e4': 3, '': 4, 'e5': 5}
+
+        hyper_graph = TimeVaryingHypergraph(hedges, timings)
+
+        # Are all timings correct? -> Should be {'e1': 1, 'e2': 2, 'e3': 2, 'e4': 3, '': 4, 'e5': 5}
+        all_timings = hyper_graph.timings()
+        self.assertEqual(all_timings, timings, 'All timings does not equal expected timings!')
+
+        # Is the timing for a specific hedge {'e1'} correct? -> Should be 1
+        hedge = 'e1'
+        hedge_timing = hyper_graph.timings(hedge)
+        expected_timing = timings[hedge]
+        self.assertEqual(hedge_timing, expected_timing, f'The hedge: {hedge} should have correct timing!')
+
+        # Test timing unknown hedge. -> Should Raise EntityNotFound
+        unknown_hedge = 'e10'
+        with self.assertRaises(KeyError):
+            hyper_graph.timings(unknown_hedge)
+
+
+
+
+
+
+    # IMPORTANT TERMINOLOGY FOR A HYPERGRAPH. NEED ALL TERMINOLOGY TO BE DEFINED AS A HYPERGRAPH
+    # def test_wrong_vertex(self):
+    #     hyper_graph = TimeVaryingHypergraph({'e1': ['a', 'b'], 'e2': ['a', 'c', 'd'], 'e3': ['c', 'd', 'e'], 'e4': [], '': ['f'], 'e5': 'g'}, {'h1': 1, 'h2': 2, 'h3': 3})
+
+    #     # Order
+    #     print(hyper_graph.vertices())
+
+    #     # Edges
+    #     print(hyper_graph.hyperedges())
+
+    #     # What edges are incident to vertex 'd'? -> Should be {'e2', 'e3'}
+    #     print(hyper_graph.hyperedges('d'))
+
+    #     # What vertices are incident to edge 'e3'? -> Should be {'c', 'd', 'e'}
+    #     print(hyper_graph.vertices('e3'))
+
+    #     # Isolated vertex: A vertex v is isolated if E(v) = ∅
+    #     print(hyper_graph.hyperedges('f'), '= {''}')
+
+    #     # Empty edge: An edge is empty is e = ∅
+    #     print(hyper_graph.vertices('e4'), '= set()')
+
+    #     # Singleton
+    #     print(len(hyper_graph.vertices('e5')), '= 1')
+
+    #     # Pendant vertex
+    #     print(len(hyper_graph.hyperedges('g')), '= 1')
+
+    #     # This is a simple hypergraph due to not including edges i.e. an hyperedge that is a subset of another hyperedge
+    #     # -------- #

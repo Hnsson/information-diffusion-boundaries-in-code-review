@@ -1,6 +1,6 @@
 import unittest
 
-from simulation.model import CommunicationNetwork
+from simulation.model import CommunicationNetwork, TimeVaryingHypergraph, EntityNotFound
 from simulation.minimal_paths import single_source_dijkstra_vertices, single_source_dijkstra_hyperedges, DistanceType
 
 
@@ -30,3 +30,9 @@ class TestMinimalPath(unittest.TestCase):
     def __init__(self, methodName=None):
         super().__init__(methodName=methodName)
         # Additional initialization
+
+
+class TestHypergraphPaths(unittest.TestCase):
+    def __init__(self, methodName=None):
+        super().__init__(methodName=methodName)
+        # Additional initalization
