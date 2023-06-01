@@ -50,7 +50,7 @@ jobs:
               run: |
                 coverage run -m test.test_suite
                 coverage report
-            # Update the coverage badge
+            # Update the coverage badges
             - name: Update coverage badge
               run: |
                 COVERAGE=$(coverage report --show-missing | awk 'END{print $NF}')
