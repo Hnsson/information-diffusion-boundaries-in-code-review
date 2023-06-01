@@ -3,7 +3,7 @@ import unittest
 
 from test_model import TestCommunicationNetwork, TestTimeVaryingHypergraph
 from test_minimal_paths import TestMinimalPath, TestHypergraphPaths
-
+from test_performance import TestMinimalpathPerformance
 
 class TestSuite():
     def __init__(self, test_cases=[]):
@@ -11,7 +11,8 @@ class TestSuite():
             'hg': TestTimeVaryingHypergraph,
             'mp': TestMinimalPath,
             'hgp': TestHypergraphPaths,
-            'cn': TestCommunicationNetwork
+            'cn': TestCommunicationNetwork,
+            'perf': TestMinimalpathPerformance
         }
         
         self.suite = self.setup_suite(test_cases)
@@ -25,7 +26,10 @@ class TestSuite():
         for command in test_cases:
             test_case_class = self.command_mapping.get(command)
             if test_case_class:
-                test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(test_case_class))
+                if sys.version_info >= (3, 11):
+                    test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(test_case_class))
+                else:
+                    test_suite.addTest(unittest.makeSuite(test_case_class))
 
         # test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestTimeVaryingHypergraph))
         # test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestMinimalPath))

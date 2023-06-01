@@ -1,5 +1,9 @@
 import sys
-sys.path.append("..")  # Add parent directory to the system path
+from os.path import dirname, abspath
+
+# Add the parent directory to the module search path
+parent_dir = dirname(dirname(abspath(__file__)))
+sys.path.append(parent_dir)
 
 import unittest
 from unittest.mock import patch, mock_open, ANY
@@ -22,25 +26,25 @@ class TestCommunicationNetwork(unittest.TestCase):
         # Additional initialization
         self.cn = CommunicationNetwork({'h1': ['v1', 'v2'], 'h2': ['v2', 'v3'], 'h3': ['v3', 'v4']}, {'h1': 1, 'h2': 2, 'h3': 3})
 
-    def test_cn_hyperedges(self):
+    def test_cn_channels(self):
         """
         Test the CommunicationNetwork (hypergraph) for its channels (hyperedges)
         """
 
         # Right amount of hyperedges (channels)
-        self.assertEqual(len(self.cn.hyperedges()), 3)
+        self.assertEqual(len(self.cn.channels()), 3)
 
         # Right hyperedges (channels)
-        self.assertEqual(self.cn.hyperedges(), {'h1', 'h3', 'h2'})
+        self.assertEqual(self.cn.channels(), {'h1', 'h3', 'h2'})
 
         # Right vertice (participants) when called with specific hyperedge (channels)
-        self.assertEqual(self.cn.hyperedges('v1'), {'h1'})
-        self.assertEqual(self.cn.hyperedges('v2'), {'h2', 'h1'})
-        self.assertEqual(self.cn.hyperedges('v3'), {'h3', 'h2'})
+        self.assertEqual(self.cn.channels('v1'), {'h1'})
+        self.assertEqual(self.cn.channels('v2'), {'h2', 'h1'})
+        self.assertEqual(self.cn.channels('v3'), {'h3', 'h2'})
 
         # Test with empty or wrong hyperedge (channel)
         with self.assertRaises(EntityNotFound):
-            self.cn.hyperedges('xx')
+            self.cn.channels('xx')
 
     def test_cn_vertices(self):
         """
@@ -48,19 +52,19 @@ class TestCommunicationNetwork(unittest.TestCase):
         """
 
         # Right amount of vertices (participants)
-        self.assertEqual(len(self.cn.vertices()), 4)
+        self.assertEqual(len(self.cn.participants()), 4)
 
         # Right vertices (participants)
-        self.assertEqual(self.cn.vertices(), {'v1', 'v2', 'v3', 'v4'})
+        self.assertEqual(self.cn.participants(), {'v1', 'v2', 'v3', 'v4'})
 
         # Right hyperedge (channels) when called with specific vertice (participant)
-        self.assertEqual(self.cn.vertices('h1'), {'v1', 'v2'})
-        self.assertEqual(self.cn.vertices('h2'), {'v2', 'v3'})
-        self.assertEqual(self.cn.vertices('h3'), {'v3', 'v4'})
+        self.assertEqual(self.cn.participants('h1'), {'v1', 'v2'})
+        self.assertEqual(self.cn.participants('h2'), {'v2', 'v3'})
+        self.assertEqual(self.cn.participants('h3'), {'v3', 'v4'})
 
         # Test with empty or wrong hyperedge (channel)
         with self.assertRaises(EntityNotFound):
-            self.cn.vertices('xx')
+            self.cn.participants('xx')
 
     @patch('pathlib.Path.open', new_callable=mock_open)
     def test_load_json(self, mock_file_open):
@@ -70,8 +74,15 @@ class TestCommunicationNetwork(unittest.TestCase):
             'channel2': {'participants': ['participant_3', 'participant_4'], 'end': '2023-05-28'}
         }
 
-        json_mock_content = json.dumps(json_mock_data)
-        mock_file_open.return_value.read.return_value = bz2.compress(json_mock_content)
+        # json_mock_content = json.dumps(json_mock_data)
+        # mock_file_open.return_value.read.return_value = bz2.compress(json_mock_content)
+        json_bytes = {}
+        try:
+            json_bytes = json.dumps(json_mock_data).encode('utf-8')
+        except AttributeError:
+            json_bytes = json.dumps(json_mock_data)
+
+        mock_file_open.return_value.read.return_value = bz2.compress(json_bytes)
 
         file_path = './data/networks/fake.json.bz2'
 
@@ -90,7 +101,7 @@ class TestCommunicationNetwork(unittest.TestCase):
         self.assertEqual(cn.timings(), expected_timings)
 
     def test_cn_with_data(self):
-        cn = CommunicationNetwork.from_json('../data/networks/microsoft.json.bz2')
+        cn = CommunicationNetwork.from_json('data/networks/microsoft.json.bz2')
         self.assertEqual(len(cn.participants()), 37103)
         self.assertEqual(len(cn.channels()), 309740)
 
@@ -197,7 +208,32 @@ class TestTimeVaryingHypergraph(unittest.TestCase):
         with self.assertRaises(KeyError):
             hyper_graph.timings(unknown_hedge)
 
+    def test_large_random_topology(self):
+        """
+        """
+        import random
+        # Arrange
+        possible_hedges = ['e1','e2','e3','e4','e5','e6','e7','e8','e9','e10']
+        possible_vertices = ['v1','v2','v3','v4','v5','v6','v7','v8','v9','v10']
+        possible_timings = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
+        hedges = {}
+        timings = {}
+
+        for hedge in possible_hedges:
+            hedges[hedge] = []
+            for _ in range(random.randint(1, len(possible_vertices))):
+                hedges[hedge].append(random.choice(possible_vertices))
+            
+            timings[hedge] = random.choice(possible_timings)
+
+        # Act
+        hypergraph = TimeVaryingHypergraph(hedges, timings)
+
+        # Assert
+        self.assertCountEqual(hypergraph.hyperedges(), possible_hedges)
+        self.assertTrue(hypergraph.vertices().issubset(set(possible_vertices)))
+        self.assertTrue(all(value in possible_timings for value in hypergraph.timings().values()))
 
 
 
