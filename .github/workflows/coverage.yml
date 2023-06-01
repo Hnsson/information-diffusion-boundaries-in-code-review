@@ -2,7 +2,7 @@ name: Continuous Testing
 run-name: Started by ${{github.actor}}
 on: [push]
 jobs:
-    run-tests:
+    run-test-suite:
         runs-on: ubuntu-latest
         strategy:
             matrix:
@@ -30,6 +30,7 @@ jobs:
               run: python -m test.test_suite
 
     run-coverage:
+        needs: run-test-suite
         runs-on: ubuntu-latest
         steps:
             - name: Checkout Main
