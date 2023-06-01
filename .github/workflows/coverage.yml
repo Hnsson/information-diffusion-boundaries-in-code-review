@@ -1,0 +1,40 @@
+name: Continuous Testing
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.11
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run tests
+        run: |
+          coverage run --source=. -m pytest test/test_suite.py
+
+      - name: Generate coverage report
+        run: coverage report
+
+      - name: Update coverage badge
+        run: |
+          COVERAGE=$(coverage report --show-missing | awk 'END{print $NF}')
+          sed -i "s|coverage-[0-9]+%25-brightgreen|coverage-${COVERAGE}-brightgreen|g" README.md
+          git add README.md
+          git config --global user.name Hnsson
+          git config --global user.email emhs21@student.bth.se
+          git commit -m "Update coverage badge [skip ci]"
+          git push
