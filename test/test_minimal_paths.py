@@ -5,9 +5,6 @@ from simulation.minimal_paths import single_source_dijkstra_vertices, single_sou
 
 from datetime import timedelta
 
-
-
-
 class TestMinimalPath(unittest.TestCase):
     def __init__(self, methodName=None):
         super().__init__(methodName=methodName)
@@ -52,6 +49,26 @@ class TestHypergraphPaths(unittest.TestCase):
         self.simple_hypergraph = TimeVaryingHypergraph(
             hedges={'e1': ['v1', 'v2', 'v3'], 'e2': ['v2', 'v4'], 'e3': ['v5'], 'e4': []},
             timings={'e1': 1, 'e2': 2, 'e3': 3, 'e4': 4}
+        )
+
+        # Conflicting hypergraph
+        self.conflicting_hypergraph = TimeVaryingHypergraph(
+            hedges = {
+                'e1': ['v1', 'v2'],
+                'e2': ['v1', 'v3'],
+                'e3': ['v2', 'v4'],
+                'e4': ['v3', 'v4'],
+                'e5': ['v4', 'v5'],
+                'e6': ['v1', 'v5'],
+            },
+            timings = {
+                'e1': timedelta(days=1),
+                'e2': timedelta(days=1),
+                'e3': timedelta(days=2),
+                'e4': timedelta(days=3),
+                'e5': timedelta(days=2),
+                'e6': timedelta(days=4),
+            }
         )
 
     def test_empty_graph(self):
@@ -107,7 +124,31 @@ class TestHypergraphPaths(unittest.TestCase):
         self.assertEqual(result_hyperedges, result_vertices,
                          'Dijkstras implementations not equal')
 
-    def test_different_distance_types_onsimple_graph(self):
+    def test_reachability_to_isolated_vertex(self):
+        """
+        Test reachability to isolated vertex using single-source Dijkstra algorithm.
+
+        The test verifies that an isolated vertex is not reachable from any of the given source vertices.
+        It performs the following steps:
+        1. Arrange the isolated vertex and a list of source vertices.
+        2. Iterate over the source vertices.
+        3. Act by running the single_source_dijkstra_hyperedges function to compute the traversal results.
+        4. Assert that the isolated vertex is not present in the traversal results.
+        """
+
+        # Arrange
+        isolated_vertex = 'v5'
+        vertices = ['v1', 'v2', 'v3', 'v4']
+
+        for vertex in vertices:
+            # Act
+            result_hyperedges = single_source_dijkstra_hyperedges(self.simple_hypergraph, vertex, DistanceType.SHORTEST, min_timing=0)
+
+            # Assert
+            self.assertNotIn(isolated_vertex, result_hyperedges, 'Isolated vertex was present in traversal!')
+
+
+    def test_different_distance_types_on_simple_graph(self):
         """
         Tests different distances on a simple graph
         
@@ -141,28 +182,18 @@ class TestHypergraphPaths(unittest.TestCase):
         self.assertEqual(result_foremost, single_source_dijkstra_vertices(
             self.simple_hypergraph, source_vertex, DistanceType.FOREMOST, min_timing=0))
 
-    def test_conflicting_timings(self):
-        hedges = {
-            'e1': ['v1', 'v2'],
-            'e2': ['v1', 'v3'],
-            'e3': ['v2', 'v4'],
-            'e4': ['v3', 'v4'],
-            'e5': ['v4', 'v5'],
-            'e6': ['v1', 'v5'],
-        }
+    def test_shortest_distance_with_conflicting_timings(self):
+        """
+        Test the computation of shortest distance with conflicting timings using Dijkstra's algorithm.
 
-        # Assign timings to the hyperedges
-        timings = {
-            'e1': timedelta(days=1),
-            'e2': timedelta(days=2),
-            'e3': timedelta(days=1),
-            'e4': timedelta(days=3),
-            'e5': timedelta(days=2),
-            'e6': timedelta(days=4),
-        }
-
-        # Create the time-varying hypergraph
-        graph = TimeVaryingHypergraph(hedges, timings)
+        The test checks the correctness of the shortest distance computation when there are conflicting timings.
+        It performs the following steps:
+        1. Choose the source vertex.
+        2. Manually compute the expected shortest distance based on the hypergraph structure and timings.
+        3. Run Dijkstra's algorithm for shortest distance on the conflicting hypergraph.
+        4. Assert that the computed shortest distance matches the expected shortest distance.
+        5. Also, assert that the result from the hyperedges-based approach matches the result from the vertices-based approach.
+        """
 
         # Choose the source and destination vertices
         source_vertex = 'v1'
@@ -170,84 +201,36 @@ class TestHypergraphPaths(unittest.TestCase):
         # Compute the expected shortest and fastest distances
         # Manually compute the distances based on the hypergraph structure and timings
         expected_shortest_distance = {'v2': 1, 'v3': 1, 'v4': 2, 'v5': 1}
+
+        # Run Dijkstra's algorithm for shortest distance
+        result_shortest = single_source_dijkstra_hyperedges(self.conflicting_hypergraph, source_vertex, DistanceType.SHORTEST, min_timing=0)
+    
+        self.assertEqual(result_shortest, expected_shortest_distance)
+        self.assertEqual(result_shortest, single_source_dijkstra_vertices(self.conflicting_hypergraph, source_vertex, DistanceType.SHORTEST, min_timing=0))
+
+    def test_fastest_distance_with_conflicting_timings(self):
+        """
+        Test the computation of fastest distance with conflicting timings using Dijkstra's algorithm.
+
+        The test verifies the correctness of the fastest distance computation when there are conflicting timings.
+        It performs the following steps:
+        1. Choose the source vertex.
+        2. Manually compute the expected fastest distance based on the hypergraph structure and timings.
+        3. Run Dijkstra's algorithm for fastest distance on the conflicting hypergraph.
+        4. Assert that the computed fastest distance matches the expected fastest distance.
+        5. Also, assert that the result from the hyperedges-based approach matches the result from the vertices-based approach.
+        """
+
+        # Choose the source and destination vertices
+        source_vertex = 'v1'
+
+        # Compute the expected shortest and fastest distances
+        # Manually compute the distances based on the hypergraph structure and timings
         expected_fastest_distance = {'v2': timedelta(0), 'v3': timedelta(0),
                                     'v4': timedelta(days=1), 'v5': timedelta(0)}
 
-        # Run Dijkstra's algorithm for shortest distance
-        result_shortest = single_source_dijkstra_hyperedges(graph, source_vertex, DistanceType.SHORTEST)
-
         # Run Dijkstra's algorithm for fastest distance
-        result_fastest = single_source_dijkstra_hyperedges(graph, source_vertex, DistanceType.FASTEST)
+        result_fastest = single_source_dijkstra_hyperedges(self.conflicting_hypergraph, source_vertex, DistanceType.FASTEST)
 
-        self.assertEqual(result_shortest, expected_shortest_distance)
         self.assertEqual(result_fastest, expected_fastest_distance)
-
-    # def test_negative_weights(self):
-    #     """
-    #     Cannot test negative weights due to dijskras not designed to handle negative weights, could
-    #     have tested if it used other algorithms, such as the Bellman-Ford algortihm.
-    #     """
-
-    #     # Arrange
-    #     hedges = {
-    #         'e1': ['v1', 'v2'],
-    #         'e2': ['v2', 'v3'],
-    #         'e3': ['v3', 'v4']
-    #     }
-
-    #     timings = {
-    #         'e1': -10,
-    #         'e2': -2,
-    #         'e3': 4.0
-    #     }
-
-    #     hypergraph = TimeVaryingHypergraph(hedges, timings)
-
-    #     # Act
-    #     result_hyperedges = single_source_dijkstra_hyperedges(hypergraph, 'v2', DistanceType.SHORTEST)
-    #     result_vertices = single_source_dijkstra_vertices(hypergraph, 'v2', DistanceType.SHORTEST)
-
-    #     print(result_hyperedges)
-    #     # print(result_vertices)
-
-# 1. Test case for a simple graph:
-# Create a TimeVaryingHypergraph object with a set of hedges and timings.
-# Choose a source vertex.
-# Choose a distance type.
-# Call the single_source_dijkstra_hyperedges or single_source_dijkstra_vertices function with the hypergraph, source vertex, distance type, and appropriate parameters.
-# Assert that the returned minimal distances are correct based on your expectations.
-
-# 2. Test case for an empty graph:
-# Create an empty TimeVaryingHypergraph object.
-# Choose a source vertex.
-# Choose a distance type.
-# Call the single_source_dijkstra_hyperedges or single_source_dijkstra_vertices function with the hypergraph, source vertex, distance type, and appropriate parameters.
-# Assert that the returned minimal distances are empty.
-
-# 3. Test case for isolated vertex:
-# Create a TimeVaryingHypergraph object with a single isolated vertex (no incident hedges).
-# Choose the isolated vertex as the source vertex.
-# Choose a distance type.
-# Call the single_source_dijkstra_hyperedges or single_source_dijkstra_vertices function with the hypergraph, source vertex, distance type, and appropriate parameters.
-# Assert that the returned minimal distances contain only the source vertex with a distance of 0.
-
-# 4. Test case for isolated hyperedge:
-# Create a TimeVaryingHypergraph object with a single isolated hyperedge (no incident vertices).
-# Choose a vertex as the source vertex.
-# Choose a distance type.
-# Call the single_source_dijkstra_hyperedges or single_source_dijkstra_vertices function with the hypergraph, source vertex, distance type, and appropriate parameters.
-# Assert that the returned minimal distances are empty.
-
-# 5. Test case for different distance types:
-# Create a TimeVaryingHypergraph object with appropriate hedges and timings.
-# Choose a source vertex.
-# Iterate over different distance types (e.g., DistanceType.SHORTEST, DistanceType.FASTEST, DistanceType.FOREMOST).
-# Call the single_source_dijkstra_hyperedges or single_source_dijkstra_vertices function with the hypergraph, source vertex, distance type, and appropriate parameters.
-# Assert that the returned minimal distances are correct based on your expectations for each distance type.
-
-# 6. Test case for complex graph and timings:
-# Create a TimeVaryingHypergraph object with a complex graph structure and timings.
-# Choose a source vertex.
-# Choose a distance type.
-# Call the single_source_dijkstra_hyperedges or single_source_dijkstra_vertices function with the hypergraph, source vertex, distance type, and appropriate parameters.
-# Assert that the returned minimal distances are correct based on your expectations.
+        self.assertEqual(result_fastest, single_source_dijkstra_vertices(self.conflicting_hypergraph, source_vertex, DistanceType.FASTEST))
