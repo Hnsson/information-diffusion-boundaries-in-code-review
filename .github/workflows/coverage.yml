@@ -60,4 +60,4 @@ jobs:
                 git config --local user.email "${{ github.actor }}@users.noreply.github.com"
                 git commit -m "Update coverage badge [skip ci]"
                 git status  # Debugging step to check the repository status
-                git push origin HEAD:main
+                git push fork HEAD:main
