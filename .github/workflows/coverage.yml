@@ -29,7 +29,27 @@ jobs:
 
       - name: Generate coverage report
         run: coverage run -m unittest discover
+  coverage:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Main
+        uses: actions/checkout@v2
 
+      - name: Setup Pyhon
+        uses: actions/setup-python@v3
+
+      - name: Install requirments
+        run: |
+          pip install -r requirements.txt
+          pip install coverage
+  
+      - name: Run Coverage
+        run: |
+          coverage run test/test_suite.py
+          coverage report
+
+      # Update the coverage badge
       - name: Update coverage badge
         run: |
           COVERAGE=$(coverage report --show-missing | awk 'END{print $NF}')
