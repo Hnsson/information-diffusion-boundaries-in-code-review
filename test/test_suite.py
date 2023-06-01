@@ -1,9 +1,9 @@
 import sys
 import unittest
 
-from test_model import TestCommunicationNetwork, TestTimeVaryingHypergraph
-from test_minimal_paths import TestMinimalPath, TestHypergraphPaths
-from test_performance import TestMinimalpathPerformance
+from .test_model import TestCommunicationNetwork, TestTimeVaryingHypergraph
+from .test_minimal_paths import TestMinimalPath, TestHypergraphPaths
+from .test_performance import TestMinimalpathPerformance
 
 class TestSuite():
     def __init__(self, test_cases=[]):
