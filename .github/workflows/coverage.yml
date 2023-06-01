@@ -60,4 +60,5 @@ jobs:
                 git config --local user.email "emhs21@student.bth.se"
                 git commit -m "Update coverage badge [skip ci]"
                 git status  # Debugging step to check the repository status
+                git branch -u origin/master
                 git push
