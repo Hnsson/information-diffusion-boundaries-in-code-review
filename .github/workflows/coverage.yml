@@ -29,3 +29,13 @@ jobs:
 
       - name: Generate coverage report
         run: coverage run -m unittest discover
+
+      - name: Update coverage badge
+        run: |
+          COVERAGE=$(coverage report --show-missing | awk 'END{print $NF}')
+          sed -i "s|!\[Coverage\](.*.svg)|![Coverage](https://img.shields.io/badge/coverage-${COVERAGE}-brightgreen.svg)|g" README.md
+          git add README.md
+          git config --local user.name "${{ github.actor }}"
+          git config --local user.email "${{ github.actor }}@users.noreply.github.com"
+          git commit -m "Update coverage badge [skip ci]"
+          git push
