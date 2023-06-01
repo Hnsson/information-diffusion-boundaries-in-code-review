@@ -56,7 +56,8 @@ jobs:
                 COVERAGE=$(coverage report --show-missing | awk 'END{print $NF}')
                 sed -i "s|!\[Coverage\](.*.svg)|![Coverage](https://img.shields.io/badge/coverage-${COVERAGE}-brightgreen.svg)|g" README.md
                 git add README.md
-                git config --local user.name "Hnsson"
-                git config --local user.email "emhs21@student.bth.se"
+                git config --local user.name "${{ github.actor }}"
+                git config --local user.email "${{ github.actor }}@users.noreply.github.com"
                 git commit -m "Update coverage badge [skip ci]"
-                git push
+                git status  # Debugging step to check the repository status
+                git push origin HEAD:main
