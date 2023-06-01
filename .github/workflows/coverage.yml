@@ -1,15 +1,17 @@
 name: Continuous Testing
-
+run-name: Started by ${{github.actor}}, for push to ${{github.ref}}
 on:
   push:
     branches:
       - main
   pull_request:
-
 jobs:
   test:
     runs-on: ubuntu-latest
-
+    strategy:
+        matrix:
+            python-version: ['3.10', '3.11']
+            with-orjson: [True, False]
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -17,17 +19,16 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.11
-
+            python-version: ${{matrix.python-version}}
+            architecture: x64
       - name: Install dependencies
         run: pip install -r requirements.txt
 
       - name: Run tests
-        run: |
-          coverage run --source=. -m pytest test/test_suite.py
+        run: python -m unittest discover
 
       - name: Generate coverage report
-        run: coverage report
+        run: coverage run -m unittest discover
 
       - name: Update coverage badge
         run: |
