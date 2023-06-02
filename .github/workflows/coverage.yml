@@ -62,6 +62,7 @@ jobs:
                 echo "COVERAGE: $COVERAGE"  # Debug statement
                 sed -i "s|!\[Coverage\](.*.svg)|![Coverage](https://img.shields.io/badge/Coverage-${COVERAGE//\%25}25-brightgreen)|g" README.md
                 git add README.md
+                git status  # Debug statement
                 git config --local user.name "Hnsson"
                 git config --local user.email "emhs21@student.bth.se"
                 git commit -m "Update coverage badge [skip ci]" --allow-empty
