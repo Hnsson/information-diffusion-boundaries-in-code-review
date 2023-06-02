@@ -60,7 +60,9 @@ jobs:
               run: |
                 COVERAGE=$(coverage report --show-missing | awk 'END{print $NF}')
                 echo "COVERAGE: $COVERAGE"  # Debug statement
-                sed -i "s|![Coverage](https://img.shields.io/badge/Coverage-.*-brightgreen)|![Coverage](https://img.shields.io/badge/Coverage-${COVERAGE//\%25}25-brightgreen)|g" README.md
+                echo "Before sed: $(cat README.md)"  # Debug statement
+                sed -i "s|!\[Coverage\](https://img.shields.io/badge/Coverage-.*25-brightgreen)|![Coverage](https://img.shields.io/badge/Coverage-${COVERAGE//\%25}25-brightgreen)|g" README.md
+                echo "After sed: $(cat README.md)"  # Debug statement
                 git add README.md
                 git status  # Debug statement
                 git config --local user.name "Hnsson"
