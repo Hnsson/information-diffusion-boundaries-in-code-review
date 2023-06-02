@@ -68,14 +68,20 @@ class TestCommunicationNetwork(unittest.TestCase):
 
     @patch('pathlib.Path.open', new_callable=mock_open)
     def test_load_json(self, mock_file_open):
+        """
+        This function tests loading a CommunicationNetwork object from a JSON file.
+
+        -Defines mock JSON data
+        -Compresses the data, mocks the open function and sets up the mocked read method.
+        -Loads the JSON file
+        -Compares the hyperedges, vertices and timings from the loaded network with the expected values
+        """
         # Arrange
         json_mock_data = {
             'channel1': {'participants': ['participant_1', 'participant_2'], 'end': '2023-05-27'},
             'channel2': {'participants': ['participant_3', 'participant_4'], 'end': '2023-05-28'}
         }
 
-        # json_mock_content = json.dumps(json_mock_data)
-        # mock_file_open.return_value.read.return_value = bz2.compress(json_mock_content)
         json_bytes = {}
         try:
             json_bytes = json.dumps(json_mock_data).encode('utf-8')
@@ -101,6 +107,15 @@ class TestCommunicationNetwork(unittest.TestCase):
         self.assertEqual(cn.timings(), expected_timings)
 
     def test_cn_with_data(self):
+        """
+        This function tests a CommunicationNetwork using pre-made data
+
+        -Loads network data from a JSON file
+        -Checks if the number of participants are equal to the expected value
+        -Checks if the number of channels are equal to the expected value
+        -Checks if the number of vertices are equal to the expected value
+        -Checks if the number of hyperedges are equal to the expected value
+        """
         cn = CommunicationNetwork.from_json('data/networks/microsoft.json.bz2')
         self.assertEqual(len(cn.participants()), 37103)
         self.assertEqual(len(cn.channels()), 309740)
@@ -115,6 +130,16 @@ class TestTimeVaryingHypergraph(unittest.TestCase):
         # Additional initialization
 
     def test_vertices(self):
+        """
+        This function does multiple tests with vertices, examining vertex functionality of a TimeVaryingHypergraph object
+
+        -Checks if all vertices are present.
+        -Checks if the vertices are in the correct order.
+        -Checks incidents to specific edge.
+        -Tests with unknown hyperedge. (expects EntityNotFound)
+        -Checks for Isolated vertex
+        -Checks for pendant vertex. (vertex only incident to 1 edge)
+        """
         hedges = {'e1': ['a', 'b'], 'e2': ['a', 'c', 'd'], 'e3': ['c', 'd', 'e'], 'e4': [], '': ['f'], 'e5': ['g']}
         timings = {'e1': 1, 'e2': 2, 'e3': 2, 'e4': 3, '': 4, 'e5': 5}
 
@@ -152,6 +177,17 @@ class TestTimeVaryingHypergraph(unittest.TestCase):
         self.assertEqual(incident_edges, 1, f'A pendant vertex: {pendant_vertex} must be incident to exactly 1 edge')
     
     def test_hedges(self):
+        """
+        This function does multiple tests with hedges, examining hedge functionality of a TimeVaryingHypergraph object
+
+        -Checks so all hedges are present.
+        -Checks that the size is correct.
+        -Checks which edge is incident to a vertex
+        -Checks with an unknown vertex. (expects EntityNotFound)
+        -Tests with an empty edge. (e = ∅)
+        -Checks for a singleton
+
+        """
         hedges = {'e1': ['a', 'b'], 'e2': ['a', 'c', 'd'], 'e3': ['c', 'd', 'e'], 'e4': [], '': ['f'], 'e5': ['g']}
         timings = {'e1': 1, 'e2': 2, 'e3': 2, 'e4': 3, '': 4, 'e5': 5}
 
@@ -188,6 +224,13 @@ class TestTimeVaryingHypergraph(unittest.TestCase):
         self.assertEqual(incident_vertices, 1, f'A singleton hedge {singleton_hedge} should only be incident to exactly 1 vertex')
     
     def test_timings(self):
+        """
+        This function does multiple tests with timing, to examine timing with a TimeVaryinghypergraph object
+
+        -Checks if all timing are correct.
+        -Checks if timing is correct for specific hedge.
+        -Checks timing for unknown hedge. (Expects EntityNotFound)
+        """
         hedges = {'e1': ['a', 'b'], 'e2': ['a', 'c', 'd'], 'e3': ['c', 'd', 'e'], 'e4': [], '': ['f'], 'e5': ['g']}
         timings = {'e1': 1, 'e2': 2, 'e3': 2, 'e4': 3, '': 4, 'e5': 5}
 
@@ -210,6 +253,17 @@ class TestTimeVaryingHypergraph(unittest.TestCase):
 
     def test_large_random_topology(self):
         """
+        This functions tests the behaviour of the TimeVaryingHypergraph object with a random large topology.
+
+        -Setup possible hedges,vertices and timings
+        -Setup empty dictionaries for hedges and timings
+        -Iterates through each hedge and selects a random number of vertices for each hedge
+        -Adds it to the dictionary
+        -Assigns random timing value to each hedge
+        -Creates a TimeVaryingHypergraph from the generated hedges
+        -Checks if the new TimeVaryingHypergraph match the set of possible hedges.
+        -Verifies that the hypergraph vertices are a subset of the possible vertices
+        -Verifies that the possible timing values are present in the hypergraph timings
         """
         import random
         # Arrange
@@ -224,7 +278,7 @@ class TestTimeVaryingHypergraph(unittest.TestCase):
             hedges[hedge] = []
             for _ in range(random.randint(1, len(possible_vertices))):
                 hedges[hedge].append(random.choice(possible_vertices))
-            
+
             timings[hedge] = random.choice(possible_timings)
 
         # Act
@@ -234,37 +288,3 @@ class TestTimeVaryingHypergraph(unittest.TestCase):
         self.assertCountEqual(hypergraph.hyperedges(), possible_hedges)
         self.assertTrue(hypergraph.vertices().issubset(set(possible_vertices)))
         self.assertTrue(all(value in possible_timings for value in hypergraph.timings().values()))
-
-
-
-
-    # IMPORTANT TERMINOLOGY FOR A HYPERGRAPH. NEED ALL TERMINOLOGY TO BE DEFINED AS A HYPERGRAPH
-    # def test_wrong_vertex(self):
-    #     hyper_graph = TimeVaryingHypergraph({'e1': ['a', 'b'], 'e2': ['a', 'c', 'd'], 'e3': ['c', 'd', 'e'], 'e4': [], '': ['f'], 'e5': 'g'}, {'h1': 1, 'h2': 2, 'h3': 3})
-
-    #     # Order
-    #     print(hyper_graph.vertices())
-
-    #     # Edges
-    #     print(hyper_graph.hyperedges())
-
-    #     # What edges are incident to vertex 'd'? -> Should be {'e2', 'e3'}
-    #     print(hyper_graph.hyperedges('d'))
-
-    #     # What vertices are incident to edge 'e3'? -> Should be {'c', 'd', 'e'}
-    #     print(hyper_graph.vertices('e3'))
-
-    #     # Isolated vertex: A vertex v is isolated if E(v) = ∅
-    #     print(hyper_graph.hyperedges('f'), '= {''}')
-
-    #     # Empty edge: An edge is empty is e = ∅
-    #     print(hyper_graph.vertices('e4'), '= set()')
-
-    #     # Singleton
-    #     print(len(hyper_graph.vertices('e5')), '= 1')
-
-    #     # Pendant vertex
-    #     print(len(hyper_graph.hyperedges('g')), '= 1')
-
-    #     # This is a simple hypergraph due to not including edges i.e. an hyperedge that is a subset of another hyperedge
-    #     # -------- #
