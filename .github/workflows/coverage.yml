@@ -55,6 +55,8 @@ jobs:
 
             # Update the coverage badges
             - name: Update coverage badge
+              env:
+                ACTIONS_STEP_DEBUG: true
               run: |
                 COVERAGE=$(coverage report --show-missing | awk 'END{print $NF}')
                 echo "COVERAGE: $COVERAGE"  # Debug statement
