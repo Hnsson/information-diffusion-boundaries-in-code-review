@@ -64,6 +64,7 @@ jobs:
                 git add README.md
                 git config --local user.name "Hnsson"
                 git config --local user.email "emhs21@student.bth.se"
-                git commit -m "Update coverage badge [skip ci]" --allow-empty
+                git branch --show-current
+                git commit -m "Update coverage badge [skip ci]"
                 git remote set-url origin https://github.com/Hnsson/information-diffusion-boundaries-in-code-review.git
                 git push origin main
